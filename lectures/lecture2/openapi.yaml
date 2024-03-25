@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: Just Message
+  description: |-
+    Just Message - це простий та безпечний месенджер для сім'ї та друзів.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/
+paths:
+  /messages:
+    get:
+      summary: Перегляд історії повідомлень
+      description: Повертає перелік всіх повідомлень в хронологічному порядку починаючи з початку історії або вказанного повідомлення
+      operationId: getMessages
+      parameters:
+        - name: since
+          in: query
+          description: Ідентифікатор останнього відомого клієнту повідомлення
+          required: false
+          schema:
+            $ref: '#/components/schemas/MessageId'
+      responses:
+        '200':
+          description: Успішне виконання запиту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMessagesResponse'
+    post:
+      summary: Відправка нового повідомлення
+      description: Додає нове повідомлення в чат
+      operationId: postMessage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostMessageRequest'
+        required: true
+      responses:
+        '200':
+          description: Успішне виконання запиту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostMessageResponse'
+components:
+  schemas:
+    MessageId:
+      description: Ідентифікатор повідомлення
+      type: integer
+      format: int64
+      example: 123456
+    MessageAuthor:
+      description: Автор повідомлення
+      type: string
+      maxLength: 128
+      example: Богдан
+    MessageBody:
+      description: Зміст повідомлення
+      type: string
+      maxLength: 1024
+      example: Привіт, як справи?    
+    MessageReceived:
+      description: Повідомлення що зберігається на сервері
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MessageId'
+        after:
+          $ref: '#/components/schemas/MessageId'
+        author:
+          $ref: '#/components/schemas/MessageAuthor'
+        on:
+          description: Дата отримання сервером повідомлення за Грінвічем (UTC)
+          type: string
+          format: date-time
+          example: 2024-03-01T17:32:28Z
+        body:
+          $ref: '#/components/schemas/MessageBody'
+    MessageSent:
+      type: object
+      properties:
+        author:
+          $ref: '#/components/schemas/MessageAuthor'
+        body:
+          $ref: '#/components/schemas/MessageBody'
+    PostMessageRequest:
+      type: object
+      properties:
+        message:
+          $ref: '#/components/schemas/MessageSent'
+    GetMessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageReceived'
+    PostMessageResponse:
+      type: object
+      properties:
+        message:
+          $ref: '#/components/schemas/MessageReceived'
