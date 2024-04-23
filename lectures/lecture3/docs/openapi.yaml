@@ -1,0 +1,291 @@
+openapi: 3.0.3
+info:
+  title: Just Message
+  description: |-
+    Just Message - це простий та безпечний месенджер для сім'ї та друзів.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/
+tags:
+  - name: auth
+    description: Аутентифікація
+  - name: messages
+    description: Історія повідомлень
+paths:
+  /auth/login:
+    get:
+      tags: 
+       - auth
+      summary: Перевіряє статус входу в систему
+      responses:
+        '200':
+          description: Поточного користувача аутентифікавано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLoginResponse'
+        '401':
+          description: Користувач ще не увійшов в систему
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: 
+       - auth
+      summary: Входить в систему за вказаними логіном та паролем
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostLoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Поточний користувач увійшов в систему
+          headers:
+            Set-Cookie:
+              schema:
+                $ref: '#/components/schemas/SessionCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLoginResponse'
+        '400':
+          description: Запит не відповідає вимогам
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      summary: Закриває сесію користувача
+      security:
+        - cookie: []
+      responses:
+        '200':
+          description: Успішне виконання запиту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostLogoutResponse'
+  /auth/signup:
+    post:
+      tags:
+        - auth
+      summary: Реєстрація нового користувача
+      description: |
+        Реєструє нового користувача в системі та за успішної реєстрації
+        автоматично виконує вхід в систему.
+      operationId: postSignup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostSignupRequest'
+        required: true
+      responses:
+        '200':
+          description: Успішне виконання запиту
+          headers:
+            Set-Cookie:
+              schema:
+                $ref: '#/components/schemas/SessionCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostSignupResponse'
+        '400':
+          description: Запит не відповідає вимогам
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /messages:
+    get:
+      tags: 
+        - messages
+      summary: Перегляд історії повідомлень
+      description: Повертає перелік всіх повідомлень в хронологічному порядку починаючи з початку історії або вказанного повідомлення
+      operationId: getMessages
+      parameters:
+        - name: since
+          in: query
+          description: Ідентифікатор останнього відомого клієнту повідомлення
+          required: false
+          schema:
+            $ref: '#/components/schemas/MessageId'
+      responses:
+        '200':
+          description: Успішне виконання запиту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMessagesResponse'
+        '400':
+          description: Запит не відповідає вимогам
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: 
+        - messages
+      security:
+        - cookies: []
+      summary: Відправка нового повідомлення
+      description: Додає нове повідомлення в чат
+      operationId: postMessage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostMessageRequest'
+        required: true
+      responses:
+        '200':
+          description: Успішне виконання запиту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostMessageResponse'
+        '400':
+          description: Запит не відповідає вимогам
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    OK:
+      description: Статус виконання запиту
+      type: boolean
+      example: true
+    Login:
+      description: Логін користувача
+      type: string
+      minLength: 3
+      maxLength: 128
+      example: bogdan
+    Password:
+      description: Пароль користувача
+      type: string
+      minLength: 3
+      maxLength: 128
+      example: $Password1
+    SessionCookie:
+      description: Кукі що зберігає ідентифікатор сесії користувача
+      type: string
+      example: session=abcedf123456; Path=/; HttpOnly
+    MessageId:
+      description: Ідентифікатор повідомлення
+      type: integer
+      format: int64
+      example: 123456
+    MessageAuthor:
+      description: Автор повідомлення
+      type: string
+      minLength: 3
+      maxLength: 128
+      example: Богдан
+    MessageBody:
+      description: Зміст повідомлення
+      type: string
+      maxLength: 1024
+      example: Привіт, як справи?    
+    MessageReceived:
+      description: Повідомлення що зберігається на сервері
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/MessageId'
+        after:
+          $ref: '#/components/schemas/MessageId'
+        author:
+          $ref: '#/components/schemas/MessageAuthor'
+        on:
+          description: Дата отримання сервером повідомлення за Грінвічем (UTC)
+          type: string
+          format: date-time
+          example: 2024-03-01T17:32:28Z
+        body:
+          $ref: '#/components/schemas/MessageBody'
+    MessageSent:
+      type: object
+      properties:
+        body:
+          $ref: '#/components/schemas/MessageBody'
+    PostMessageRequest:
+      type: object
+      properties:
+        message:
+          $ref: '#/components/schemas/MessageSent'
+    GetMessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageReceived'
+        ok:
+          $ref: '#/components/schemas/OK'
+    PostMessageResponse:
+      type: object
+      properties:
+        message:
+          $ref: '#/components/schemas/MessageReceived'
+        ok:
+          $ref: '#/components/schemas/OK'
+    PostSignupRequest:
+      type: object
+      properties:
+        login:
+          $ref: '#/components/schemas/Login'
+        password:
+          $ref: '#/components/schemas/Password'
+        name:
+          $ref: '#/components/schemas/MessageAuthor'
+    PostSignupResponse:
+      type: object
+      properties:
+        ok:
+          $ref: '#/components/schemas/OK'
+    GetLoginResponse:
+      type: object
+      properties:
+        ok:
+          $ref: '#/components/schemas/OK'
+    PostLoginRequest:
+      type: object
+      properties:
+        login:
+          $ref: '#/components/schemas/Login'
+        password:
+          $ref: '#/components/schemas/Password'
+    PostLoginResponse:
+      type: object
+      properties:
+        ok:
+          $ref: '#/components/schemas/OK'
+    PostLogoutResponse:
+      type: object
+      properties:
+        ok:
+          $ref: '#/components/schemas/OK'
+    ErrorResponse:
+      type: object
+      properties:
+        ok:
+          $ref: '#/components/schemas/OK'
+        error:
+          type: string
+          example: "bad-body-param"
+  securitySchemas:
+    cookies:
+      type: apiKey
+      in: cookie
+      name: session
+
+    

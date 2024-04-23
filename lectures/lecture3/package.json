@@ -1,0 +1,22 @@
+{
+  "name": "lecture3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "cd src && node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "npx eslint src"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-session": "^1.18.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.1.1",
+    "eslint": "^9.1.0"
+  }
+}
