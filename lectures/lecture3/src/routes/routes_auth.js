@@ -9,11 +9,26 @@ import { validateString } from '../input_validation.js';
 
 const router = express.Router();
 
-function handleGetLogin(req, res) {
-    if (req.session.userId === undefined)
+async function handleGetLogin(req, res) {
+    if (req.session.userId === undefined) {
         respondBadRequest(res, errors.NOT_AUTHENTICATED, 401);
-    else
-        respondOk(res);
+    } else {
+        const user = await new UsersTable().findById(req.session.userId);
+        if (user === null) {
+            req.session.destroy(() => {
+                respondBadRequest(res, errors.NOT_AUTHENTICATED);
+            });
+        } else {
+            const body = {
+                user: {
+                    login: user.login,
+                    name: user.name,
+                },
+                ok: true
+            }
+            res.status(200).json(body);
+        }
+    }
 }
 
 async function handlePostLogin(req, res) {

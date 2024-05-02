@@ -255,6 +255,8 @@ components:
     GetLoginResponse:
       type: object
       properties:
+        user:
+          $ref: '#/components/schemas/UserInfo'
         ok:
           $ref: '#/components/schemas/OK'
     PostLoginRequest:
@@ -282,10 +284,16 @@ components:
         error:
           type: string
           example: "bad-body-param"
+    UserInfo:
+      description: Інформація про поточного користувача
+      type: object
+      properties:
+        login:
+          $ref: '#/components/schemas/Login'
+        name:
+          $ref: '#/components/schemas/MessageAuthor'
   securitySchemas:
     cookies:
       type: apiKey
       in: cookie
       name: session
-
-    
