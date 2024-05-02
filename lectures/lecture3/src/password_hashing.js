@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
+import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 
 const keyLength = 32;
 
